@@ -1,0 +1,13 @@
+<!-- 
+  Learning 2 Domain (questions and answers) PDF (XSL-FO) generation.
+  
+  Provides base support for generating XSL-FO from learning2
+  interactions.
+  
+  
+  -->
+<plugin id="org.dita.learning2.pdf">
+  <require plugin="org.dita.dita13base.html"/>
+  <feature extension="dita.xsl.xslfo" value="xsl/learning2domain2fo.xsl" type="file"/>  
+  <feature extension="dita.conductor.pdf2.param" value="learning2domainParams.xml" type="file"/>
+</plugin>
