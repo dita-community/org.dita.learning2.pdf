@@ -162,11 +162,17 @@
        Attribute sets for interactions
        =================================== -->
   
-  <xsl:attribute-set name="lc-feedback">
+  <xsl:attribute-set name="lc-feedback" use-attribute-sets="common.block">
     
   </xsl:attribute-set>
   
   <xsl:attribute-set name="lc-answer-option-group">
+    <xsl:attribute name="provisional-distance-between-starts" select="'12pt'"/>
+    <xsl:attribute name="provisional-label-separation" select="'4pt'"/>
+  </xsl:attribute-set>
+  <xsl:attribute-set name="lc-answer-option-item"
+     use-attribute-sets="common.block"
+    >
     
   </xsl:attribute-set>
   <xsl:attribute-set name="lc-answer-option-label">
@@ -175,10 +181,10 @@
   <xsl:attribute-set name="lc-answer-option-label-cell">
     
   </xsl:attribute-set>
-  <xsl:attribute-set name="lc-item">
+  <xsl:attribute-set name="lc-item" use-attribute-sets="common.block">
     
   </xsl:attribute-set>
-  <xsl:attribute-set name="lc-matching-item">
+  <xsl:attribute-set name="lc-matching-item" use-attribute-sets="common.block">
     
   </xsl:attribute-set>
   <xsl:attribute-set name="lc-MatchingItem-blank">
@@ -205,14 +211,14 @@
   <xsl:attribute-set name="lcQuestionText">
     
   </xsl:attribute-set>
-  <xsl:attribute-set name="lc-question">
+  <xsl:attribute-set name="lc-question" use-attribute-sets="common.block">
     
   </xsl:attribute-set>
-  <xsl:attribute-set name="lc-answer-content">
+  <xsl:attribute-set name="lc-answer-content" use-attribute-sets="common.block">
     
   </xsl:attribute-set>
   <xsl:attribute-set name="lcQuestionNumber">
-    
+    <xsl:attribute name="font-weight" select="'bold'"/>
   </xsl:attribute-set>
 
   <!-- ===================================
@@ -332,7 +338,7 @@
              the answer option label.
           -->
        
-        <fo:list-item>
+        <fo:list-item xsl:use-attribute-sets="lc-answer-option-item">
           <fo:list-item-label xsl:use-attribute-sets="lc-answer-option-label" 
                                end-indent="label-end()">   
             <fo:block>
@@ -359,8 +365,7 @@
         <xsl:if test="$lc:doDebug">
           <xsl:message> + [DEBUG] lcAnswerOption: Normal answer option processing. </xsl:message>      
         </xsl:if>
-        <!-- FIXME: Need to use FO list markup here. -->
-        <fo:list-item>
+        <fo:list-item xsl:use-attribute-sets="lc-answer-option-item">
           <fo:list-item-label xsl:use-attribute-sets="lc-answer-option-label" 
                                end-indent="label-end()">
             <fo:block>
