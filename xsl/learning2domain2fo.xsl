@@ -173,9 +173,16 @@
   <xsl:attribute-set name="lc-answer-option-item"
      use-attribute-sets="common.block"
     >
-    
+    <xsl:attribute name="color" select="'from-parent()'"/>
+  </xsl:attribute-set>
+  <xsl:attribute-set name="lc-answer-option-item-correct"     
+    >
+    <xsl:attribute name="color" select="'blue'"/>
   </xsl:attribute-set>
   <xsl:attribute-set name="lc-answer-option-label">
+    
+  </xsl:attribute-set>
+  <xsl:attribute-set name="lc-answer-option-body">
     
   </xsl:attribute-set>
   <xsl:attribute-set name="lc-answer-option-label-cell">
@@ -206,7 +213,7 @@
     
   </xsl:attribute-set>
   <xsl:attribute-set name="lc-interaction-label">
-    
+    <xsl:attribute name="font-weight" select="'bold'"/>
   </xsl:attribute-set>
   <xsl:attribute-set name="lcQuestionText">
     
@@ -220,6 +227,18 @@
   <xsl:attribute-set name="lcQuestionNumber">
     <xsl:attribute name="font-weight" select="'bold'"/>
   </xsl:attribute-set>
+  
+  <xsl:attribute-set name="lc-matchTable-col-answerItemLabel">
+    <xsl:attribute name="column-width" select="'4em'"/>
+  </xsl:attribute-set>
+    
+  <xsl:attribute-set name="lc-matchTable-col-item">
+    <xsl:attribute name="column-width" select="'50%'"/>    
+  </xsl:attribute-set>
+  <xsl:attribute-set name="lc-matchTable-col-matchItem">
+    <xsl:attribute name="column-width" select="'50%'"/>        
+  </xsl:attribute-set>
+  
 
   <!-- ===================================
        End of attribute sets
@@ -302,8 +321,10 @@
     <xsl:param name="lc:showOnlyFeedback" as="xs:boolean" tunnel="yes"
        select="$lc:doShowOnlyFeedback"
     />
+    <xsl:param name="lc:styleCorrectResponses" as="xs:boolean" tunnel="yes" 
+      select="$lc:doStyleCorrectResponses"
+    />
     <xsl:param name="topicref" as="element()" select="." tunnel="yes"/>    
-<!--    <xsl:variable name="lc:doDebug" as="xs:boolean" select="true()"/>-->
     
     <xsl:if test="$lc:doDebug">
       <xsl:message> + [DEBUG] lcAnswerOption:  <xsl:value-of select="substring(., 1, 20)"/></xsl:message>
@@ -311,6 +332,7 @@
       <xsl:message> + [DEBUG] lcAnswerOption:    lc:doDebug=<xsl:value-of select="$lc:doDebug"/></xsl:message>
       <xsl:message> + [DEBUG] lcAnswerOption:    lc:showOnlyFeedback=<xsl:value-of select="$lc:showOnlyFeedback"/></xsl:message>
       <xsl:message> + [DEBUG] lcAnswerOption:    lc:showOnlyCorrectAnswer=<xsl:value-of select="$lc:showOnlyCorrectAnswer"/></xsl:message>
+      <xsl:message> + [DEBUG] lcAnswerOption:    lc:styleCorrectResponses=<xsl:value-of select="$lc:styleCorrectResponses"/></xsl:message>
     </xsl:if>
     
     <xsl:choose>
@@ -334,19 +356,17 @@
                                   the feedback.
           </xsl:message>
         </xsl:if>
-        <!-- When we're only showing the correct answers, or showing feedback we have to generate
-             the answer option label.
-          -->
-       
-        <fo:list-item xsl:use-attribute-sets="lc-answer-option-item">
+        
+        <fo:list-item xsl:use-attribute-sets="lc-answer-option-item lc-answer-option-item-correct">
           <fo:list-item-label xsl:use-attribute-sets="lc-answer-option-label" 
                                end-indent="label-end()">   
             <fo:block>
               <xsl:apply-templates select="." mode="lc-set-answer-option-label"/>
             </fo:block>
           </fo:list-item-label>
-          <fo:list-item-body xsl:use-attribute-sets="lc-answer-option-label" 
-                               start-indent="body-start()">
+          <fo:list-item-body 
+              xsl:use-attribute-sets="lc-answer-option-body" 
+              start-indent="body-start()">
             <fo:block>            
               <xsl:apply-templates select="if ($lc:showOnlyFeedback) 
                 then (*[contains(@class, ' learning-d/lcFeedback ')] | 
@@ -364,8 +384,10 @@
         
         <xsl:if test="$lc:doDebug">
           <xsl:message> + [DEBUG] lcAnswerOption: Normal answer option processing. </xsl:message>      
+          <xsl:message> + [DEBUG] answerOption: lx:isCorrectAnswer()=<xsl:value-of select="lc:isCorrectAnswer(.)"/></xsl:message>
         </xsl:if>
-        <fo:list-item xsl:use-attribute-sets="lc-answer-option-item">
+        
+        <xsl:variable name="answerOptionContent" as="node()*">
           <fo:list-item-label xsl:use-attribute-sets="lc-answer-option-label" 
                                end-indent="label-end()">
             <fo:block>
@@ -378,7 +400,19 @@
               <xsl:apply-templates/>
             </fo:block>
           </fo:list-item-body>
-        </fo:list-item>
+        </xsl:variable>
+        <xsl:choose>
+          <xsl:when test="$lc:styleCorrectResponses and lc:isCorrectAnswer(.)">
+            <fo:list-item xsl:use-attribute-sets="lc-answer-option-item lc-answer-option-item-correct">
+              <xsl:sequence select="$answerOptionContent"/>
+            </fo:list-item>
+          </xsl:when>
+          <xsl:otherwise>
+            <fo:list-item xsl:use-attribute-sets="lc-answer-option-item">
+              <xsl:sequence select="$answerOptionContent"/>
+            </fo:list-item>
+          </xsl:otherwise>
+        </xsl:choose>        
       </xsl:when>
       <xsl:otherwise>
         <!-- Must be show only feedback but there's no feedback. -->
@@ -437,14 +471,9 @@
 <!--    <xsl:message> + [DEBUG] matchTable: seed=<xsl:sequence select="$seed"/></xsl:message>-->
 
       <fo:table>
-      <!-- The colgroup is here so that CSS can easily control the column
-           formatting details.
-      <colgroup>
-        <col xsl:use-attribute-sets="lc-matchTable-col-answerItemLabel"/>
-        <col xsl:use-attribute-sets="lc-matchTable-col-item"/>
-        <col xsl:use-attribute-sets="lc-matchTable-col-matchItem"/>
-      </colgroup>
-        -->
+        <fo:table-column xsl:use-attribute-sets="lc-matchTable-col-answerItemLabel"/>
+        <fo:table-column xsl:use-attribute-sets="lc-matchTable-col-item"/>
+        <fo:table-column xsl:use-attribute-sets="lc-matchTable-col-matchItem"/>
       
       <xsl:variable name="matchFromItems" as="element()*"
         select="*[contains(@class, ' learning2-d/lcMatchingPair2 ')]/*[contains(@class, ' learning2-d/lcItem2 ')] | 
@@ -744,7 +773,9 @@
   <xsl:template match="lcInteractionLabel2 | *[contains(@class, ' learningInteractionBase2-d/lcInteractionLabel2 ')]" priority="100">
     <xsl:param name="doDebug" as="xs:boolean" tunnel="yes" select="false()"/>
     <xsl:param name="lc:showQuestionLabels" as="xs:boolean" tunnel="yes" select="$lc:doShowQuestionLabels"/>
-    <xsl:message> + [DEBUG] lcInteractionLabel2: lc:showQuestionLabels="<xsl:value-of select="$lc:showQuestionLabels"/>"</xsl:message>
+    <xsl:if test="$doDebug">
+      <xsl:message> + [DEBUG] lcInteractionLabel2: lc:showQuestionLabels="<xsl:value-of select="$lc:showQuestionLabels"/>"</xsl:message>
+    </xsl:if>
 
     <xsl:if test="$lc:showQuestionLabels">
       <fo:block xsl:use-attribute-sets="lc-interaction-label">
@@ -753,19 +784,8 @@
     </xsl:if>
   </xsl:template>
   
-  <xsl:template match="*[contains(@class, ' learningInteractionBase-d/lcQuestionBase ')]">
-    <xsl:param name="doDebug" as="xs:boolean" tunnel="yes" select="false()"/>
-    <xsl:variable name="baseClass" as="xs:string*"
-      select="concat(lc:getBaseLcTypeForElement(..), 'Question')"
-    />
-    <!-- For learning1, lcQuestionBase specializes <p> --> 
-    <fo:block xsl:use-attribute-sets="lc-interaction-label">
-      <xsl:call-template name="lcGetQuestionNumber"/>
-      <span xsl:use-attribute-sets="lcQuestionText"><xsl:apply-templates/></span>
-    </fo:block>
-  </xsl:template>
-  
-  <xsl:template match="*[contains(@class, ' learningInteractionBase2-d/lcQuestionBase2 ')]">
+  <xsl:template match="*[contains(@class, ' learningInteractionBase2-d/lcQuestionBase2 ')] |
+                       *[contains(@class, ' learningInteractionBase-d/lcQuestionBase ')]">
     <xsl:param name="doDebug" as="xs:boolean" tunnel="yes" select="false()"/>
     <xsl:variable name="baseClass" as="xs:string*"
       select="concat(lc:getBaseLcTypeForElement(..), 'Question')"
